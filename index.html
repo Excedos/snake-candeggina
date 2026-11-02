@@ -5,52 +5,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Snake della Candeggina</title>
 <style>
-  body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f1720;color:#e6edf3;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;gap:14px;padding:16px}
-  h1{margin:0;font-size:20px;letter-spacing:.5px}
-  .hud{display:flex;gap:18px;font-size:15px;opacity:.9}
-  .hud b{font-size:18px}
-  canvas{background:#16202c;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.45);touch-action:none;max-width:92vw;height:auto}
-  .hint{font-size:13px;opacity:.65;text-align:center;max-width:360px}
-  .over{font-size:18px;color:#ffd166;font-weight:700;min-height:24px}
-  button{font:inherit;padding:8px 18px;border:0;border-radius:8px;background:#ffd166;color:#222;cursor:pointer;font-weight:700}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#0b1118;color:#e6edf3;font-family:'Inter',system-ui,-apple-system,sans-serif;gap:16px;padding:20px}
+  h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.5px;
+    background:linear-gradient(135deg,#7ee787,#2f7dd1);-webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;background-clip:text}
+  .hud{display:flex;gap:24px;font-size:14px;opacity:.85;font-variant-numeric:tabular-nums}
+  .hud b{color:#7ee787;font-weight:600}
+  canvas{background:#16202c;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
+    touch-action:none;max-width:92vw;height:auto}
+  .over{font-size:16px;color:#ffd166;font-weight:600;min-height:22px;text-align:center}
+  button{font:inherit;padding:10px 22px;border:0;border-radius:8px;
+    background:linear-gradient(135deg,#7ee787,#3fb950);color:#0b1118;cursor:pointer;font-weight:700;
+    transition:transform .1s,box-shadow .1s}
+  button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(126,231,135,.3)}
+  button:active{transform:translateY(0)}
+  .hint{font-size:12px;opacity:.5;text-align:center;max-width:340px;line-height:1.5}
 </style>
 </head>
 <body>
-<h1>🐍 Snake della Candeggina</h1>
+<h1>Snake della Candeggina</h1>
 <div class="hud">Punteggio: <b id="score">0</b> &nbsp; Record: <b id="best">0</b></div>
 <div class="over" id="over"></div>
 <canvas id="cv" width="320" height="320"></canvas>
 <button id="btn">Nuova partita</button>
-<div class="hint">Frecce / WASD / swipe per muovere. La candeggina non è commestibile, ma il gioco non lo sa.</div>
+<div class="hint">Frecce / WASD / swipe per muoversi</div>
 <script>
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const N=20,S=16,C=320;
-let snake,dir,next,food,score,best=0,running=false,over=false;
+let snake,dir,next,food,score,best=+localStorage.getItem('snake_best')||0,running=false,over=false;
 const scoreEl=document.getElementById('score'),bestEl=document.getElementById('best'),overEl=document.getElementById('over');
-function reset(){snake=[{x:8,y:10},{x:7,y:10},{x:6,y:10}];dir={x:1,y:0};next={x:1,y:0};score=0;place();running=true;over=false;overEl.textContent='';}
-function place(){do{food={x:Math.floor(Math.random()*N),y:Math.floor(Math.random()*N)};}while(snake.some(s=>s.x===food.x&&s.y===food.y));}
-function draw(){ctx.fillStyle='#16202c';ctx.fillRect(0,0,C,C);
-  ctx.strokeStyle='rgba(255,255,255,.04)';for(let i=1;i<N;i++){ctx.beginPath();ctx.moveTo(i*S,0);ctx.lineTo(i*S,C);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*S);ctx.lineTo(C,i*S);ctx.stroke();}
-  // candeggina
-  ctx.save();ctx.translate(food.x*S+8,food.y*S+8);ctx.rotate(-0.2);
+bestEl.textContent=best;
+
+function reset(){snake=[{x:8,y:10},{x:7,y:10},{x:6,y:10}];dir={x:1,y:0};next={x:1,y:0};score=0;place();running=true;over=false;overEl.textContent='';scoreEl.textContent=0}
+function place(){do{food={x:Math.floor(Math.random()*N),y:Math.floor(Math.random()*N)}}while(snake.some(s=>s.x===food.x&&s.y===food.y))}
+
+function draw(){
+  ctx.fillStyle='#16202c';ctx.fillRect(0,0,C,C);
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,.03)';
+  for(let i=1;i<N;i++){ctx.beginPath();ctx.moveTo(i*S,0);ctx.lineTo(i*S,C);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*S);ctx.lineTo(C,i*S);ctx.stroke()}
+  // candeggina (bleach bottle) - CSS drawn
+  ctx.save();ctx.translate(food.x*S+8,food.y*S+8);ctx.rotate(-0.15);
   ctx.fillStyle='#f4f7fb';ctx.beginPath();ctx.roundRect(-6,-8,12,16,2);ctx.fill();
   ctx.fillStyle='#2f7dd1';ctx.fillRect(-6,-2,12,8);
-  ctx.fillStyle='#c9d4e0';ctx.fillRect(-3,-11,6,4);ctx.restore();
+  ctx.fillStyle='#c9d4e0';ctx.fillRect(-3,-11,6,4);
+  // label
+  ctx.fillStyle='#fff';ctx.font='bold 5px sans-serif';ctx.textAlign='center';ctx.fillText('CANDE',0,3);
+  ctx.restore();
   // snake
-  snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#7ee787':'#3fb950';ctx.beginPath();ctx.roundRect(s.x*S+1,s.y*S+1,S-2,S-2,4);ctx.fill();});
-  if(dir.x&&(dir.x+dir.y)){
-    const h=snake[0];ctx.fillStyle='#0f1720';ctx.fillRect(h.x*S+5,h.y*S+3,2,2);ctx.fillRect(h.x*S+9,h.y*S+3,2,2);}
+  snake.forEach((s,i)=>{
+    const t=i/snake.length;
+    ctx.fillStyle=i===0?'#7ee787':`rgb(${63+t*20},${185-t*40},${80+t*20})`;
+    ctx.beginPath();ctx.roundRect(s.x*S+1,s.y*S+1,S-2,S-2,4);ctx.fill();
+  });
+  // eyes on head
+  if(dir.x||dir.y){
+    const h=snake[0];
+    ctx.fillStyle='#0b1118';
+    ctx.fillRect(h.x*S+5,h.y*S+4,2,2);
+    ctx.fillRect(h.x*S+9,h.y*S+4,2,2);
+  }
 }
-function tick(){dir=next;const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
-  if(h.x<0||h.y<0||h.x>=N||h.y>=N||snake.some(s=>s.x===h.x&&s.y===h.y)){running=false;over=true;overEl.textContent='Game over — hai mangiato la candeggina 🧴';if(score>best){best=score;localStorage.setItem('snake_best',best);bestEl.textContent=best;}return;}
-  snake.unshift(h);if(h.x===food.x&&h.y===food.y){score++;scoreEl.textContent=score;place();}else snake.pop();}
-let last=0;function loop(t){if(running){if(t-last>110){last=t;tick();}}draw();requestAnimationFrame(loop);}
-document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();const m={arrowup:{x:0,y:-1},w:{x:0,y:-1},arrowdown:{x:0,y:1},s:{x:0,y:1},arrowleft:{x:-1,y:0},a:{x:-1,y:0},arrowright:{x:1,y:0},d:{x:1,y:0}};
-  if(m[k]){e.preventDefault();if(m[k].x!==-dir.x||m[k].y!==-dir.y)next=m[k];}});
-let ts=null;cv.addEventListener('touchstart',e=>{ts=[e.touches[0].clientX,e.touches[0].clientY];},{passive:true});
-cv.addEventListener('touchend',e=>{if(!ts)return;const dx=e.changedTouches[0].clientX-ts[0],dy=e.changedTouches[0].clientY-ts[1];
-  if(Math.abs(dx)>Math.abs(dy))next=dx>0?{x:1,y:0}:{x:-1,y:0};else next=dy>0?{x:0,y:1}:{x:0,y:-1};ts=null;},{passive:true});
-document.getElementById('btn').onclick=()=>{reset();};
-best=+(localStorage.getItem('snake_best')||0);bestEl.textContent=best;reset();requestAnimationFrame(loop);
+
+function tick(){
+  dir=next;const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(h.x<0||h.y<0||h.x>=N||h.y>=N||snake.some(s=>s.x===h.x&&s.y===h.y)){
+    running=false;over=true;
+    overEl.textContent='Game over — hai mancato la candeggina';
+    if(score>best){best=score;localStorage.setItem('snake_best',best);bestEl.textContent=best}
+    return;
+  }
+  snake.unshift(h);
+  if(h.x===food.x&&h.y===food.y){score++;scoreEl.textContent=score;place()}else{snake.pop()}
+  draw();
+}
+
+let tid=null;
+function loop(){if(!running)return;tick();tid=setTimeout(loop,Math.max(60,120-score*2))}
+
+document.getElementById('btn').onclick=()=>{reset();loop()};
+document.addEventListener('keydown',e=>{
+  const k=e.key;
+  if((k==='ArrowUp'||k==='w')&&dir.y!==1)next={x:0,y:-1};
+  else if((k==='ArrowDown'||k==='s')&&dir.y!==-1)next={x:0,y:1};
+  else if((k==='ArrowLeft'||k==='a')&&dir.x!==1)next={x:-1,y:0};
+  else if((k==='ArrowRight'||k==='d')&&dir.x!==-1)next={x:1,y:0};
+});
+let tx,ty;
+cv.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY});
+cv.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>Math.abs(dy)){if(dx>20&&dir.x!==-1)next={x:1,y:0};else if(dx<-20&&dir.x!==1)next={x:-1,y:0}}
+  else{if(dy>20&&dir.y!==-1)next={x:0,y:1};else if(dy<-20&&dir.y!==1)next={x:0,y:-1}}
+});
+
+draw();
 </script>
-</body></html>
+</body>
+</html>
